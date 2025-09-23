@@ -12,9 +12,36 @@ import {
   Clock,
   Zap
 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import axios from 'axios';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth(); // Ensure setUser is available in your context
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef();
+
+  const handlePictureChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // Convert file to base64
+  const reader = new FileReader();
+  reader.onloadend = async () => {
+    const base64String = reader.result;
+    setUploading(true);
+    try {
+      const res = await axios.post('/api/profile/upload-picture', {
+        profilePicture: base64String
+      });
+      setUser({ ...user, profilePicture: res.data.profilePicture });
+    } catch (err) {
+      alert('Failed to upload picture');
+    }
+    setUploading(false);
+  };
+  reader.readAsDataURL(file);
+};
+
 
   const achievements = [
     { name: 'First Steps', description: 'Complete your first challenge', icon: '🎯', earned: true },
@@ -53,13 +80,34 @@ const Profile = () => {
         {/* Profile Header */}
         <div className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-8 mb-8">
           <div className="flex flex-col md:flex-row items-start md:items-center space-y-6 md:space-y-0 md:space-x-8">
-            <div className="relative">
-              <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-full flex items-center justify-center">
-                <User className="h-12 w-12 text-white" />
+            <div className="relative group">
+              <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-full flex items-center justify-center overflow-hidden">
+                {user?.profilePicture ? (
+                  <img
+                    src={user.profilePicture}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="h-12 w-12 text-white" />
+                )}
               </div>
-              <div className="absolute -bottom-2 -right-2 bg-yellow-500 rounded-full p-2">
+              <button
+                className="absolute bottom-0 right-0 bg-yellow-500 rounded-full p-2 hover:bg-yellow-400 transition"
+                onClick={() => fileInputRef.current.click()}
+                disabled={uploading}
+                title="Change picture"
+              >
                 <Star className="h-4 w-4 text-white" />
-              </div>
+              </button>
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={handlePictureChange}
+              />
+            
             </div>
             
             <div className="flex-1">

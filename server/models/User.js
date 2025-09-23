@@ -30,6 +30,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 1
   },
+  profilePicture: {
+    type: String, // URL to the image
+    default: ''   // or a default avatar URL
+  },
   completedChallenges: [{
     challengeId: String,
     completedAt: Date,
