@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import authRoutes from './routes/auth.js';
 import protectedRoutes from './routes/protected.js';
+import challengeRoutes from './routes/challenges.js';
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/codecraft
 app.use('/api/auth', authRoutes);
 app.use('/api', protectedRoutes);
 app.use('/api/profile', protectedRoutes);
+app.use('/api/challenges', challengeRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

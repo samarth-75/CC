@@ -7,6 +7,7 @@ import AuthPage from './components/AuthPage';
 import Dashboard from './components/Dashboard';
 import Arena from './components/Arena';
 import Challenges from './components/Challenges';
+import ChallengeDetail from './components/ChallengeDetail'; // <-- Import this component
 import Leaderboard from './components/Leaderboard';
 import Profile from './components/Profile';
 import Navbar from './components/Navbar';
@@ -51,6 +52,16 @@ const AppContent = () => {
           <ProtectedRoute>
             <Navbar />
             <Challenges />
+          </ProtectedRoute>
+        } 
+      />
+      {/* Challenge detail route */}
+      <Route 
+        path="/challenges/:id" 
+        element={
+          <ProtectedRoute>
+            <Navbar />
+            <ChallengeDetail />
           </ProtectedRoute>
         } 
       />

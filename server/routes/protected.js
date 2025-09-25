@@ -37,12 +37,12 @@ router.get('/arena', authMiddleware, (req, res) => {
   });
 });
 
-router.get('/challenges', authMiddleware, (req, res) => {
-  res.json({
-    message: 'Available challenges',
-    challenges: []
-  });
-});
+// router.get('/challenges', authMiddleware, (req, res) => {
+//   res.json({
+//     message: 'Available challenges',
+//     challenges: []
+//   });
+// });
 
 router.get('/leaderboard', authMiddleware, (req, res) => {
   res.json({

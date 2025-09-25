@@ -39,6 +39,9 @@ const userSchema = new mongoose.Schema({
     completedAt: Date,
     xpGained: Number
   }],
+  // User.js
+  completedChallenges: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Challenge' }],
+  xp: { type: Number, default: 0 },
   badges: [String],
   joinedAt: {
     type: Date,
