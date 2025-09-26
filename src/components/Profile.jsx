@@ -126,7 +126,9 @@ const Profile = () => {
               <div className="flex flex-wrap items-center gap-6">
                 <div className="flex items-center space-x-2">
                   <TrendingUp className="h-5 w-5 text-purple-400" />
-                  <span className="text-white font-bold">Level {user?.level}</span>
+                  <span className="text-white font-bold">
+                    Level {user?.xp !== undefined ? Math.floor(user.xp / 100) : 0}
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Zap className="h-5 w-5 text-yellow-400" />
@@ -143,15 +145,19 @@ const Profile = () => {
           {/* Level Progress */}
           <div className="mt-6">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-300">Progress to Level {(user?.level || 1) + 1}</span>
-              <span className="text-purple-400 font-bold">{((user?.xp || 0) % 100)}%</span>
-            </div>
-            <div className="w-full bg-slate-700 rounded-full h-3">
-              <div 
-                className="bg-gradient-to-r from-purple-500 to-cyan-500 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${((user?.xp || 0) % 100)}%` }}
-              ></div>
-            </div>
+              <span className="text-gray-300">
+                  Progress to Level {(user?.xp !== undefined ? Math.floor(user.xp / 100) + 1 : 1)}
+                </span>
+                <span className="text-purple-400 font-bold">
+                  {user?.xp !== undefined ? user.xp % 100 : 0}%
+                </span>
+                <div className="w-full bg-slate-700 rounded-full h-3">
+                  <div 
+                    className="bg-gradient-to-r from-purple-500 to-cyan-500 h-3 rounded-full transition-all duration-500"
+                    style={{ width: `${user?.xp !== undefined ? user.xp % 100 : 0}%` }}
+                  ></div>
+                </div>
+                </div>
           </div>
         </div>
 

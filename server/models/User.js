@@ -64,6 +64,11 @@ userSchema.pre('save', async function(next) {
   }
 });
 
+userSchema.pre('save', function(next) {
+  this.level = Math.floor(this.xp / 100);
+  next();
+});
+
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);

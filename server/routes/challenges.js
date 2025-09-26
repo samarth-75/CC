@@ -24,6 +24,7 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
 
   try {
     user.xp = (user.xp || 0) + xpEarned;
+    user.level = Math.floor(user.xp / 100);
     user.completedChallenges = user.completedChallenges || [];
     if (!user.completedChallenges.includes(challengeId)) {
       user.completedChallenges.push(challengeId);
