@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import authRoutes from './routes/auth.js';
 import protectedRoutes from './routes/protected.js';
 import challengeRoutes from './routes/challenges.js';
+import blogRoutes from './routes/blogs.js';
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api', protectedRoutes);
 app.use('/api/profile', protectedRoutes);
 app.use('/api/challenges', challengeRoutes);
+app.use('/api/blogs', blogRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

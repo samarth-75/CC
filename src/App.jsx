@@ -11,6 +11,8 @@ import ChallengeDetail from './components/ChallengeDetail'; // <-- Import this c
 import Leaderboard from './components/Leaderboard';
 import Profile from './components/Profile';
 import Navbar from './components/Navbar';
+import Blogs from './components/Blogs';
+import BlogDetail from './components/BlogDetail';
 
 const AppContent = () => {
   const { user } = useAuth();
@@ -86,6 +88,9 @@ const AppContent = () => {
       
       {/* Catch all - redirect to home */}
       <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/" element={<Dashboard />} />
+        <Route path="/blogs" element={<Blogs />} />
+        <Route path="/blogs/:id" element={<BlogDetail />} />
     </Routes>
   );
 };

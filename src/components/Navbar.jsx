@@ -73,7 +73,9 @@ const Navbar = () => {
                 <span className="font-medium text-white">{user?.username}</span>
               </div>
               <div className="text-xs text-purple-400">
-                Level {user?.level} • {user?.xp} XP
+                <span className="text-white font-bold">
+                    Level {user?.xp !== undefined ? Math.floor(user.xp / 100) : 0}
+                  </span> • {user?.xp} XP
               </div>
             </div>
             <button
