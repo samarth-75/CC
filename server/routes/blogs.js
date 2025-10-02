@@ -22,4 +22,25 @@ router.get('/:id', async (req, res) => {
   res.json(blog);
 });
 
+// Create a new blog
+router.post('/', async (req, res) => {
+  try {
+    const { title, excerpt, author, image, content } = req.body;
+
+    const newBlog = new Blog({
+      title,
+      excerpt,
+      author,
+      image,
+      content
+    });
+
+    const savedBlog = await newBlog.save();
+    res.status(201).json(savedBlog);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
 export default router;

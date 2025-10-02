@@ -1,12 +1,11 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const blogSchema = new mongoose.Schema({
-  title: String,
-  author: String,
-  excerpt: String,
-  content: String,
-  image: String,
-  createdAt: { type: Date, default: Date.now }
-});
+const BlogSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  excerpt: { type: String, required: true },
+  author: { type: String, required: true },
+  image: { type: String },
+  content: { type: String, required: true }   // ✅ new field
+}, { timestamps: true });
 
-export default mongoose.model('Blog', blogSchema);
+export default mongoose.model("Blog", BlogSchema);
