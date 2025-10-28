@@ -1,5 +1,4 @@
-import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState, useRef } from 'react';
 import { 
   User, 
   Mail, 
@@ -10,39 +9,140 @@ import {
   Award,
   TrendingUp,
   Clock,
-  Zap
+  Zap,
+  Plus,
+  X
 } from 'lucide-react';
-import { useState, useRef } from 'react';
-import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
+import { ExternalLink} from 'lucide-react';
 
 const Profile = () => {
-  const { user, setUser } = useAuth(); // Ensure setUser is available in your context
+  const { user, setUser } = useAuth();
   const [uploading, setUploading] = useState(false);
+  const [showAddSkill, setShowAddSkill] = useState(false);
+  const [newSkillName, setNewSkillName] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
   const fileInputRef = useRef();
+  const [showAddProject, setShowAddProject] = useState(false);
+  const [projectForm, setProjectForm] = useState({
+    name: '',
+    github: '',
+    description: ''
+  });
 
-  const handlePictureChange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
 
-  // Convert file to base64
-  const reader = new FileReader();
-  reader.onloadend = async () => {
-    const base64String = reader.result;
-    setUploading(true);
-    try {
-      const res = await axios.post('/api/profile/upload-picture', {
-        profilePicture: base64String
-      });
-      setUser({ ...user, profilePicture: res.data.profilePicture });
-    } catch (err) {
-      alert('Failed to upload picture');
+const handleAddProject = async () => {
+  if (!projectForm.name.trim() || !projectForm.github.trim() || !projectForm.description.trim()) return;
+  try {
+    const res = await fetch('/api/profile/add-project', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(projectForm)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setUser({ ...user, projects: data.projects });
+      setProjectForm({ name: '', github: '', description: '' });
+      setShowAddProject(false);
+      setShowSuccess(true); // Show popup
+      setTimeout(() => {
+        setShowSuccess(false);
+        window.location.reload(); // Reload page after 1.5s
+      }, 1500);
     }
-    setUploading(false);
-  };
-  reader.readAsDataURL(file);
+  } catch (error) {
+    // Optionally show error
+  }
 };
 
+  const handleDeleteProject = async (projectName) => {
+    try {
+      const res = await fetch('/api/profile/delete-project', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name: projectName })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUser({ ...user, projects: data.projects });
+      }
+    } catch (error) {
+      // Optionally show error
+    }
+  };
 
+  // Upload profile picture
+  const handlePictureChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result;
+      setUploading(true);
+      try {
+        const res = await fetch('/api/profile/upload-picture', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ profilePicture: base64String })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setUser({ ...user, profilePicture: data.profilePicture });
+        }
+      } catch (err) {
+        // Optionally show error
+      }
+      setUploading(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Add skill to database
+  const handleAddSkill = async () => {
+    if (!newSkillName.trim()) return;
+    if (user.skills?.includes(newSkillName.trim())) return;
+
+    try {
+      const res = await fetch('/api/skills/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name: newSkillName.trim() })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUser({ ...user, skills: data.skills });
+        setNewSkillName('');
+        setShowAddSkill(false);
+      }
+    } catch (error) {
+      // Optionally show error
+    }
+  };
+
+  // Delete skill from database
+  const handleDeleteSkill = async (skillName) => {
+    try {
+      const res = await fetch('/api/skills/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name: skillName })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUser({ ...user, skills: data.skills });
+      }
+    } catch (error) {
+      // Optionally show error
+    }
+  };
+
+  // Achievements and recent activity (static for now)
   const achievements = [
     { name: 'First Steps', description: 'Complete your first challenge', icon: '🎯', earned: true },
     { name: 'Speed Demon', description: 'Complete a challenge in under 30 minutes', icon: '⚡', earned: true },
@@ -58,21 +158,6 @@ const Profile = () => {
     { action: 'Earned "Speed Demon" Badge', date: '2 days ago', xp: 75 },
     { action: 'Completed CSS Grid Challenge', date: '3 days ago', xp: 60 }
   ];
-
-  const skillsProgress = [
-    { skill: 'JavaScript', level: 8, progress: 80 },
-    { skill: 'React', level: 6, progress: 60 },
-    { skill: 'CSS', level: 7, progress: 70 },
-    { skill: 'Node.js', level: 5, progress: 50 },
-    { skill: 'Python', level: 4, progress: 40 }
-  ];
-
-  const getProgressColor = (progress) => {
-    if (progress >= 80) return 'from-green-500 to-emerald-500';
-    if (progress >= 60) return 'from-yellow-500 to-orange-500';
-    if (progress >= 40) return 'from-purple-500 to-pink-500';
-    return 'from-red-500 to-pink-500';
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -107,7 +192,6 @@ const Profile = () => {
                 style={{ display: 'none' }}
                 onChange={handlePictureChange}
               />
-            
             </div>
             
             <div className="flex-1">
@@ -119,7 +203,7 @@ const Profile = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Calendar className="h-4 w-4" />
-                  <span>Joined {new Date(user?.joinedAt).toLocaleDateString()}</span>
+                  <span>Joined {user?.joinedAt ? new Date(user.joinedAt).toLocaleDateString() : ''}</span>
                 </div>
               </div>
               
@@ -146,18 +230,18 @@ const Profile = () => {
           <div className="mt-6">
             <div className="flex justify-between items-center mb-2">
               <span className="text-gray-300">
-                  Progress to Level {(user?.xp !== undefined ? Math.floor(user.xp / 100) + 1 : 1)}
-                </span>
-                <span className="text-purple-400 font-bold">
-                  {user?.xp !== undefined ? user.xp % 100 : 0}%
-                </span>
-                <div className="w-full bg-slate-700 rounded-full h-3">
-                  <div 
-                    className="bg-gradient-to-r from-purple-500 to-cyan-500 h-3 rounded-full transition-all duration-500"
-                    style={{ width: `${user?.xp !== undefined ? user.xp % 100 : 0}%` }}
-                  ></div>
-                </div>
-                </div>
+                Progress to Level {(user?.xp !== undefined ? Math.floor(user.xp / 100) + 1 : 1)}
+              </span>
+              <span className="text-purple-400 font-bold">
+                {user?.xp !== undefined ? user.xp % 100 : 0}%
+              </span>
+            </div>
+            <div className="w-full bg-slate-700 rounded-full h-3">
+              <div 
+                className="bg-gradient-to-r from-purple-500 to-cyan-500 h-3 rounded-full transition-all duration-500"
+                style={{ width: `${user?.xp !== undefined ? user.xp % 100 : 0}%` }}
+              ></div>
+            </div>
           </div>
         </div>
 
@@ -205,56 +289,197 @@ const Profile = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Skills Progress */}
+          {/* My Skills Section */}
           <div className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-6">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center space-x-2">
-              <TrendingUp className="h-6 w-6 text-purple-400" />
-              <span>Skills Progress</span>
-            </h2>
-            <div className="space-y-4">
-              {skillsProgress.map((skill, index) => (
-                <div key={index}>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-white font-medium">{skill.skill}</span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-gray-400">Level {skill.level}</span>
-                      <span className="text-purple-400 font-bold">{skill.progress}%</span>
-                    </div>
-                  </div>
-                  <div className="w-full bg-slate-700 rounded-full h-2">
-                    <div 
-                      className={`bg-gradient-to-r ${getProgressColor(skill.progress)} h-2 rounded-full transition-all duration-500`}
-                      style={{ width: `${skill.progress}%` }}
-                    ></div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+                <TrendingUp className="h-6 w-6 text-purple-400" />
+                <span>My Skills</span>
+              </h2>
+              <button
+                onClick={() => setShowAddSkill(!showAddSkill)}
+                className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Add Skill</span>
+              </button>
+            </div>
+
+            {/* Add Skill Form */}
+            {showAddSkill && (
+              <div className="mb-6 p-4 bg-slate-700/50 rounded-lg border border-purple-500/30">
+                <h3 className="text-white font-medium mb-3">Add New Skill</h3>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Skill name (e.g., Python, React, AWS)"
+                    value={newSkillName}
+                    onChange={(e) => setNewSkillName(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
+                    className="w-full px-4 py-2 bg-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={handleAddSkill}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition"
+                    >
+                      Add
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAddSkill(false);
+                        setNewSkillName('');
+                      }}
+                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
-              ))}
+              </div>
+            )}
+
+            {/* Skills List */}
+            <div className="space-y-3">
+              {user?.skills && user.skills.length > 0 ? (
+                <div className="flex flex-wrap gap-3">
+                  {user.skills.map((skill, index) => (
+                    <div
+                      key={index}
+                      className="group flex items-center space-x-2 bg-gradient-to-r from-purple-600/20 to-cyan-600/20 border border-purple-500/30 rounded-lg px-4 py-2 hover:border-purple-500/50 transition"
+                    >
+                      <span className="text-white font-medium">{skill}</span>
+                      <button
+                        onClick={() => handleDeleteSkill(skill)}
+                        className="text-red-400 hover:text-red-300 transition opacity-0 group-hover:opacity-100"
+                        title="Remove skill"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-400 mb-2">No skills added yet</p>
+                  <p className="text-gray-500 text-sm">Click "Add Skill" to showcase your expertise!</p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Recent Activity */}
+          
+        </div>
+
+        {/* Projects Section */}
           <div className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-6">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center space-x-2">
-              <Clock className="h-6 w-6 text-cyan-400" />
-              <span>Recent Activity</span>
-            </h2>
-            <div className="space-y-4">
-              {recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
-                  <div>
-                    <p className="text-white font-medium">{activity.action}</p>
-                    <p className="text-gray-400 text-sm">{activity.date}</p>
-                  </div>
-                  <div className="flex items-center space-x-1 text-yellow-400">
-                    <Zap className="h-4 w-4" />
-                    <span className="font-bold">+{activity.xp}</span>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+                <Star className="h-6 w-6 text-orange-400" />
+                <span>My Projects</span>
+              </h2>
+              <button
+                onClick={() => setShowAddProject(!showAddProject)}
+                className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Add Project</span>
+              </button>
+            </div>
+            {/* Add Project Form */}
+            {showAddProject && (
+              <div className="mb-6 p-4 bg-slate-700/50 rounded-lg border border-purple-500/30">
+                <h3 className="text-white font-medium mb-3">Add New Project</h3>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Project Name"
+                    value={projectForm.name}
+                    onChange={e => setProjectForm({ ...projectForm, name: e.target.value })}
+                    className="w-full px-4 py-2 bg-slate-600 text-white rounded-lg mb-2"
+                  />
+                  <input
+                    type="url"
+                    placeholder="GitHub Link"
+                    value={projectForm.github}
+                    onChange={e => setProjectForm({ ...projectForm, github: e.target.value })}
+                    className="w-full px-4 py-2 bg-slate-600 text-white rounded-lg mb-2"
+                  />
+                  <textarea
+                    placeholder="Description (max 50 words)"
+                    value={projectForm.description}
+                    onChange={e => setProjectForm({ ...projectForm, description: e.target.value })}
+                    maxLength={250}
+                    className="w-full px-4 py-2 bg-slate-600 text-white rounded-lg mb-2"
+                  />
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={handleAddProject}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition"
+                    >
+                      Submit
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAddProject(false);
+                        setProjectForm({ name: '', github: '', description: '' });
+                      }}
+                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
-              ))}
+              </div>
+            )}
+           {/* Projects List */}
+            <div className="space-y-3">
+              {user?.projects && user.projects.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {user.projects.map((project, idx) => (
+                    <div
+                      key={idx}
+                      className="group flex flex-col md:flex-row md:items-center justify-between bg-gradient-to-r from-purple-600/20 to-cyan-600/20 border border-purple-500/30 rounded-lg px-4 py-2 hover:border-purple-500/50 transition"
+                    >
+                      <div>
+                        <a
+                          href={project.github}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-white font-bold text-lg hover:underline flex items-center"
+                        >
+                          {project.name}
+                          <ExternalLink className="h-4 w-4 ml-2" />
+                        </a>
+                        <p className="text-gray-300 text-sm">{project.description}</p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteProject(project.name)}
+                        className="text-red-400 hover:text-red-300 transition opacity-0 group-hover:opacity-100 mt-2 md:mt-0"
+                        title="Remove project" 
+                        >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-400 mb-2">No projects added yet</p>
+                  <p className="text-gray-500 text-sm">Click "Add Project" to showcase your work!</p>
+                </div>
+              )}
+              {showSuccess && (
+  <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center z-50">
+    <div className="bg-green-600 text-white px-8 py-4 rounded-lg shadow-lg text-xl">
+      Project added successfully!
+    </div>
+  </div>
+)}
             </div>
           </div>
         </div>
-
+        
         {/* Achievements */}
         <div className="mt-8 bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-6">
           <h2 className="text-xl font-bold text-white mb-6 flex items-center space-x-2">
@@ -280,7 +505,8 @@ const Profile = () => {
           </div>
         </div>
       </div>
-    </div>
+    
+    
   );
 };
 
