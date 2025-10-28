@@ -46,13 +46,12 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/codecraft
 
 // REST API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api', protectedRoutes);
-app.use('/api/profile', protectedRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/skills', skillsRoutes);
+app.use('/api', protectedRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
