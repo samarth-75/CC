@@ -1,3 +1,31 @@
+const sampleAnswers = {
+  1: `function Button({ variant, size, disabled, onClick, children }) {
+  // Correct implementation for React Button
+  return (
+    <button
+      className={\`btn \${variant} \${size}\`}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}`,
+  2: `function speedRun(arr) {
+  // Correct implementation for Algorithm Speed Run
+  return arr.sort((a, b) => a - b);
+}`,
+  3: `.container {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+}`,
+  4: `function quizAnswer(question) {
+  // Correct implementation for JS Quiz Battle
+  return question.correctOption;
+}`
+};
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Sword, Play, Zap, Clock, User, Trophy, X, CheckCircle, XCircle, Code, Send, Flag } from 'lucide-react';
 
@@ -27,6 +55,8 @@ const mockSocket = {
   }
 };
 
+
+
 // Monaco Editor Mock (simplified version)
 const CodeEditor = ({ value, onChange, language = 'javascript' }) => {
   return (
@@ -45,6 +75,8 @@ const CodeEditor = ({ value, onChange, language = 'javascript' }) => {
     </div>
   );
 };
+
+
 
 // Victory Modal Component
 const VictoryModal = ({ show, onClose, battleStats }) => {
@@ -121,13 +153,95 @@ const VictoryModal = ({ show, onClose, battleStats }) => {
   );
 };
 
+
+// Add this above your BattleRoom or Arena component
+const DefeatModal = ({ show, onClose, battleStats }) => {
+  if (!show) return null;
+
+  
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-800 rounded-2xl p-8 max-w-md w-full border border-red-500/30 animate-fadeIn">
+        <div className="flex justify-end mb-4">
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+        
+        <div className="flex justify-center mb-6">
+          <div className="bg-red-500/20 p-6 rounded-full">
+            <XCircle className="h-16 w-16 text-red-400" />
+          </div>
+        </div>
+
+        <h2 className="text-3xl font-bold text-white text-center mb-2">Defeat!</h2>
+        <p className="text-gray-300 text-center mb-8">
+          Sorry, your solution did not pass all tests. Try again!
+        </p>
+
+        <div className="bg-slate-900/50 rounded-xl p-6 mb-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Battle Statistics</h3>
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-gray-400">
+                <Clock className="h-5 w-5" />
+                <span>Your Time:</span>
+              </div>
+              <span className="text-white font-bold">{battleStats?.yourTime}</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-gray-400">
+                <CheckCircle className="h-5 w-5" />
+                <span>Tests Passed:</span>
+              </div>
+              <span className="text-red-400 font-bold">{battleStats?.yourTests}</span>
+            </div>
+
+            <div className="h-px bg-slate-700 my-3"></div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-gray-400">
+                <Clock className="h-5 w-5" />
+                <span>Opponent Time:</span>
+              </div>
+              <span className="text-white font-bold">{battleStats?.opponentTime}</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-gray-400">
+                <CheckCircle className="h-5 w-5" />
+                <span>Tests Passed:</span>
+              </div>
+              <span className="text-green-400 font-bold">{battleStats?.opponentTests}</span>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white py-3 px-4 rounded-lg transition-all font-semibold"
+        >
+          Return to Arena
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // Battle Room Component
-const BattleRoom = ({ battle, onClose, onVictory }) => {
+const BattleRoom = ({ battle, onClose, onVictory, onDefeat }) => {
+if (!battle) return null;
+
   const [code, setCode] = useState('function Button({ variant, size, disabled, onClick, children }) {\n  // Implement your button component here\n  \n}');
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
   const [testResults, setTestResults] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [opponentStatus, setOpponentStatus] = useState('coding');
+  
+
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -178,32 +292,44 @@ const BattleRoom = ({ battle, onClose, onVictory }) => {
   };
 
   const handleSubmit = () => {
-    setIsSubmitting(true);
-    
-    const mockResult = {
-      yourTime: formatTime(600 - timeLeft),
-      yourTests: '10/10',
-      opponentTime: '03:45',
-      opponentTests: '7/10'
-    };
+  setIsSubmitting(true);
 
-    mockSocket.emit('submitSolution', {
-      battleId: battle.id,
-      code,
-      mockResult
-    });
+  // Assume battle.id matches questionId (1-4)
+  const correct = isCodeCorrect(code, battle.id);
 
-    setTimeout(() => {
-      setIsSubmitting(false);
-      onVictory(mockResult);
-    }, 1500);
+  const mockResult = {
+    yourTime: formatTime(600 - timeLeft),
+    yourTests: correct ? '10/10' : '0/10',
+    opponentTime: '03:45',
+    opponentTests: '7/10',
+    victory: correct
   };
 
+  mockSocket.emit('submitSolution', {
+    battleId: battle.id,
+    code,
+    mockResult
+  });
+
+  setTimeout(() => {
+    setIsSubmitting(false);
+    if (correct) {
+      onVictory(mockResult);
+    } else {
+      onDefeat(mockResult);
+    }
+  }, 1500);
+};
   const handleSurrender = () => {
     if (confirm('Are you sure you want to surrender? This will count as a loss.')) {
       onClose();
     }
   };
+
+  function isCodeCorrect(userCode, questionId) {
+  // Simple comparison: trim and check equality
+  return userCode.trim() === sampleAnswers[questionId].trim();
+}
 
   return (
     <div className="fixed inset-0 bg-slate-900 z-50 overflow-hidden">
@@ -366,6 +492,9 @@ const CodeBattleArena = () => {
   const [showVictory, setShowVictory] = useState(false);
   const [battleStats, setBattleStats] = useState(null);
 
+  const [showDefeat, setShowDefeat] = useState(false);
+const [defeatStats, setDefeatStats] = useState(null);
+
   const availableMatches = [
     {
       id: 1,
@@ -417,13 +546,31 @@ const CodeBattleArena = () => {
     setBattleStats(null);
   };
 
+  const handleDefeat = (stats) => {
+  setDefeatStats(stats);
+  setShowDefeat(true);
+  setActiveBattle(null);
+};
+
+const handleCloseDefeat = () => {
+  setShowDefeat(false);
+  setDefeatStats(null);
+};
+
   const handleCloseBattle = () => {
     setActiveBattle(null);
   };
 
   if (activeBattle) {
-    return <BattleRoom battle={activeBattle} onClose={handleCloseBattle} onVictory={handleVictory} />;
-  }
+  return (
+    <BattleRoom
+      battle={activeBattle}
+      onClose={handleCloseBattle}
+      onVictory={handleVictory}
+      onDefeat={handleDefeat}   // <-- Add this prop
+    />
+  );
+}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -489,6 +636,14 @@ const CodeBattleArena = () => {
         onClose={handleCloseVictory} 
         battleStats={battleStats}
       />
+
+      <DefeatModal
+  show={showDefeat}
+  onClose={handleCloseDefeat}
+  battleStats={defeatStats}
+/>
+
+
 
       <style>{`
         @keyframes fadeIn {
